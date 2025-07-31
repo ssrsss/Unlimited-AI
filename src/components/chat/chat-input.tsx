@@ -122,7 +122,7 @@ export function ChatInput({ conversationId }: ChatInputProps) {
           const { addMessage } = useStore.getState();
           
           try {
-            // 批量更新：直接合并内容而不频繁调用addMessage
+            // 直接使用api.ts提供的批量内容更新，减少状态更新次数
             if (content || reasoning) {
               const updatedContent = lastMessage.content + (content || '');
               const updatedReasoning = (lastMessage.reasoning_content || '') + (reasoning || '');
@@ -140,11 +140,11 @@ export function ChatInput({ conversationId }: ChatInputProps) {
                 true
               );
               
-              // 降低事件触发频率
-              if ((content && content.length > 15) || (reasoning && reasoning.length > 15)) {
+              // 降低事件触发频率，使用更长的阈值和更长的延迟
+              if ((content && content.length > 30) || (reasoning && reasoning.length > 30)) {
                 setTimeout(() => {
                   document.dispatchEvent(new CustomEvent('content-update'));
-                }, 50);
+                }, 100);
               }
             }
           } catch (error) {

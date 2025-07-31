@@ -26,18 +26,22 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
   const [userScrolling, setUserScrolling] = useState(false);
   // 上次滚动时间
   const lastUserScrollTime = useRef<number>(0);
-
+  // 防止过于频繁的滚动更新
+  const lastScrollTime = useRef<number>(0);
+  
   // 创建更新处理函数
   const handleContentUpdate = useCallback(() => {
     console.log('收到内容更新事件');
     // 触发组件重新渲染
     setUpdateTrigger(prev => prev + 1);
     
-    // 检查用户是否在手动滚动
+    // 检查是否应该自动滚动
     const now = Date.now();
-    if (now - lastUserScrollTime.current > 1000) {
-      // 如果用户超过1秒没有滚动，则认为不是在手动滚动
-      // 立即滚动到底部
+    // 只有当用户超过1.5秒没有手动滚动，并且距离上次自动滚动超过300ms时，才执行自动滚动
+    if (now - lastUserScrollTime.current > 1500 && now - lastScrollTime.current > 300) {
+      // 设置上次自动滚动时间
+      lastScrollTime.current = now;
+      // 使用requestAnimationFrame确保在下一帧渲染后滚动
       requestAnimationFrame(() => {
         scrollToBottomSafely();
       });
@@ -50,10 +54,10 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
       lastUserScrollTime.current = Date.now();
       setUserScrolling(true);
       
-      // 1秒后重置用户滚动状态
+      // 1.5秒后重置用户滚动状态
       setTimeout(() => {
         setUserScrolling(false);
-      }, 1000);
+      }, 1500);
     };
     
     if (containerRef.current) {
@@ -70,9 +74,13 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
   // 安全滚动到底部，考虑移动端输入框的高度
   const scrollToBottomSafely = useCallback(() => {
     // 如果用户正在手动滚动，则不干预
-    if (userScrolling) return;
+    if (userScrolling) {
+      console.log('用户正在滚动，取消自动滚动');
+      return;
+    }
     
     if (bottomRef.current) {
+      console.log('执行自动滚动');
       if (isMobile) {
         // 在移动端，考虑底部输入框的高度
         bottomRef.current.scrollIntoView({ 
@@ -83,7 +91,7 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
         // 额外添加一些偏移，确保内容完全可见
         setTimeout(() => {
           window.scrollBy({
-            top: -100, // 向上偏移，避免被输入框遮挡
+            top: -120, // 增加偏移量，更好地避免被输入框遮挡
             behavior: 'smooth'
           });
         }, 100);
@@ -110,11 +118,15 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
 
   // 监听消息列表变化和加载状态变化，自动滚动到底部
   useEffect(() => {
-    // 立即滚动一次
-    scrollToBottomSafely();
-    
-    // 设置一个短暂的延迟，确保在DOM更新后滚动
-    const timeoutId = setTimeout(scrollToBottomSafely, 100);
+    // 使用setTimeout延迟执行自动滚动，确保DOM完全更新
+    const timeoutId = setTimeout(() => {
+      // 检查是否应该自动滚动
+      const now = Date.now();
+      // 只有当用户超过1.5秒没有手动滚动时，才执行自动滚动
+      if (now - lastUserScrollTime.current > 1500) {
+        scrollToBottomSafely();
+      }
+    }, 100);
     
     return () => clearTimeout(timeoutId);
   }, [messages.length, isLoading, updateTrigger, scrollToBottomSafely]);
@@ -124,7 +136,7 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       
-      // 只有当最后一条消息是助手且内容变化时才滚动
+      // 只有当最后一条消息是助手且内容变化时才考虑滚动
       if (lastMessage.role === 'assistant') {
         const currentContent = lastMessage.content || '';
         
@@ -133,10 +145,16 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
           setLastMessageContent(currentContent);
           setLastMessageId(messages.length);
           
-          // 使用requestAnimationFrame确保DOM更新后再滚动
-          requestAnimationFrame(() => {
-            scrollToBottomSafely();
-          });
+          // 检查是否应该自动滚动
+          const now = Date.now();
+          // 只有当用户超过1.5秒没有手动滚动时，才执行自动滚动
+          if (now - lastUserScrollTime.current > 1500 && now - lastScrollTime.current > 300) {
+            lastScrollTime.current = now;
+            // 使用requestAnimationFrame确保在下一帧渲染后滚动
+            requestAnimationFrame(() => {
+              scrollToBottomSafely();
+            });
+          }
         }
       }
     }
@@ -166,7 +184,7 @@ export function MessageList({ conversationId, showThinking = false }: MessageLis
           showThinking={showThinking}
         />
       ))}
-      <div ref={bottomRef} className="h-18 md:h-1" />
+      <div ref={bottomRef} className="h-24 md:h-1" />
     </div>
   );
 } 

@@ -135,7 +135,8 @@ export async function streamChat({
       
       if (data === '[DONE]') {
         console.log('收到[DONE]信号');
-        // 不立即调用onFinish，等待所有数据处理完成后再调用
+        // 确保发送最后的累积内容
+        sendAccumulatedContent();
         return;
       }
       

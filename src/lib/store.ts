@@ -189,7 +189,7 @@ export const useStore = create<State>()(
                   console.log('找到助手消息索引:', actualIndex);
                   
                   // 更新内容或思考过程
-                  let updatedMessage = { ...lastMessage };
+                  const updatedMessage = { ...lastMessage };
                   
                   if (message.content !== undefined) {
                     console.log('更新内容:', message.content);

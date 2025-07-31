@@ -22,47 +22,57 @@ export const MessageItem = memo(function MessageItem({ message, showThinking = f
   
   // 使用ref跟踪最后更新时间，防止频繁更新
   const lastUpdateTime = useRef<number>(Date.now());
+  // 是否处于忙碌更新状态
+  const isUpdating = useRef<boolean>(false);
   
   // 创建更新处理函数
   const handleContentUpdate = useCallback(() => {
+    // 如果当前正在更新中，不重复触发
+    if (isUpdating.current) return;
+    
     // 添加节流，避免频繁更新
     const now = Date.now();
-    if (now - lastUpdateTime.current < 100) {
-      return; // 如果距离上次更新不到100ms，则忽略此次更新
+    if (now - lastUpdateTime.current < 200) {
+      return; // 增加节流时间到200ms，减少更新频率
     }
     
     if (message.content !== content) {
+      // 设置更新状态
+      isUpdating.current = true;
+      
       console.log('通过事件更新内容:', message.content);
       setContent(message.content);
       lastUpdateTime.current = now;
       
-      // 使用RAF确保DOM更新后再滚动
-      requestAnimationFrame(() => {
-        if (contentRef.current && !isUser) {
-          contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-      });
+      // 更新完成后重置状态
+      setTimeout(() => {
+        isUpdating.current = false;
+      }, 50);
     }
-  }, [message.content, content, isUser]);
+  }, [message.content, content]);
   
   const handleReasoningUpdate = useCallback(() => {
+    // 如果当前正在更新中，不重复触发
+    if (isUpdating.current) return;
+    
     // 添加节流，避免频繁更新
     const now = Date.now();
-    if (now - lastUpdateTime.current < 100) {
-      return; // 如果距离上次更新不到100ms，则忽略此次更新
+    if (now - lastUpdateTime.current < 200) {
+      return; // 增加节流时间到200ms，减少更新频率
     }
     
     if (message.reasoning_content !== reasoningContent) {
+      // 设置更新状态
+      isUpdating.current = true;
+      
       console.log('通过事件更新推理内容:', message.reasoning_content);
       setReasoningContent(message.reasoning_content);
       lastUpdateTime.current = now;
       
-      // 使用RAF确保DOM更新后再滚动
-      requestAnimationFrame(() => {
-        if (reasoningRef.current && message.reasoning_content) {
-          reasoningRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-      });
+      // 更新完成后重置状态
+      setTimeout(() => {
+        isUpdating.current = false;
+      }, 50);
     }
   }, [message.reasoning_content, reasoningContent]);
   
@@ -78,39 +88,33 @@ export const MessageItem = memo(function MessageItem({ message, showThinking = f
     };
   }, [handleContentUpdate, handleReasoningUpdate]);
   
-  // 当消息内容更新时，立即更新本地状态并滚动
+  // 当消息内容更新时，立即更新本地状态
   useEffect(() => {
     // 添加节流，避免频繁更新
     const now = Date.now();
-    if (now - lastUpdateTime.current < 100 && content !== '') {
-      return; // 如果距离上次更新不到100ms且已有内容，则忽略此次更新
+    if (now - lastUpdateTime.current < 200 && content !== '') {
+      return; // 增加节流时间到200ms，减少更新频率
     }
     
     if (message.content !== content) {
       console.log('内容更新:', message.content);
       setContent(message.content);
       lastUpdateTime.current = now;
-      
-      // 不主动滚动，只更新内容
-      // 由MessageList统一管理滚动行为
     }
-  }, [message.content, content, isUser]);
+  }, [message.content, content]);
   
-  // 当思考过程更新时，立即更新本地状态并滚动
+  // 当思考过程更新时，立即更新本地状态
   useEffect(() => {
     // 添加节流，避免频繁更新
     const now = Date.now();
-    if (now - lastUpdateTime.current < 100 && reasoningContent !== '') {
-      return; // 如果距离上次更新不到100ms且已有内容，则忽略此次更新
+    if (now - lastUpdateTime.current < 200 && reasoningContent !== '') {
+      return; // 增加节流时间到200ms，减少更新频率
     }
     
     if (message.reasoning_content !== reasoningContent) {
       console.log('推理内容更新:', message.reasoning_content);
       setReasoningContent(message.reasoning_content);
       lastUpdateTime.current = now;
-      
-      // 不主动滚动，只更新内容
-      // 由MessageList统一管理滚动行为
     }
   }, [message.reasoning_content, reasoningContent]);
   
