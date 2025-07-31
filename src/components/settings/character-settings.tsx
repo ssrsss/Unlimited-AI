@@ -68,9 +68,9 @@ export function CharacterSettings() {
   const handleOpenEdit = (character: CharacterCard) => {
     setEditingCharacter(character);
     setName(character.name);
-    setDescription(character.description);
+    setDescription(character.description || '');
     setSystemPrompt(character.systemPrompt);
-    setAvatar(character.avatar);
+    setAvatar(character.avatar || '');
     setIsDialogOpen(true);
   };
   
@@ -179,7 +179,7 @@ export function CharacterSettings() {
   
   const filteredCharacters = characters.filter(character => 
     character.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    character.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (character.description?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     character.systemPrompt.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
