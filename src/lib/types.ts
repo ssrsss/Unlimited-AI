@@ -15,8 +15,9 @@ export interface Conversation {
 export interface CharacterCard {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   systemPrompt: string;
+  avatar?: string;
   isDefault?: boolean;
 }
 
