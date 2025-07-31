@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { ConversationList } from './conversation-list';
-import { MessageList } from './message-list';
-import { ChatInput } from './chat-input';
+import { ConversationList } from '@/components/chat/conversation-list';
+import { MessageList } from '@/components/chat/message-list';
+import { ChatInput } from '@/components/chat/chat-input';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -52,24 +52,11 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
     };
   }, []);
   
-  // 如果当前页面是价格页面，直接显示价格内容
-  if (pathname === '/pricing') {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <div className="flex flex-col min-h-screen">
-          {children}
-          {isMobile && <MobileNav activeTab="pricing" setActiveTab={() => {}} />}
-        </div>
-        <Toaster position={isMobile ? "top-center" : "top-right"} />
-      </ThemeProvider>
-    );
-  }
-  
   // 当settings.showThinking变化时更新本地状态
   useEffect(() => {
     console.log('设置已更新:', settings);
     setShowThinking(settings.showThinking);
-  }, [settings.showThinking]);
+  }, [settings]); // 添加settings作为依赖项
   
   // 初始化对话
   useEffect(() => {
@@ -105,8 +92,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
     } catch (e) {
       console.error('读取localStorage失败:', e);
     }
-  }, [conversations.length, createConversation, isInitialized]);
-  
+  }, [conversations.length, createConversation, isInitialized, settings]);
+
   // 处理创建新对话
   const handleCreateConversation = () => {
     try {
@@ -117,110 +104,117 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
     }
   };
 
-  // 渲染移动端视图
-  if (isMobile) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <div className="flex flex-col h-screen overflow-hidden">
-          {/* 移动端头部 */}
-          {mobileView === "chat" && (
-            <div className="flex items-center justify-between p-2 border-b border-border bg-background">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setMobileView("conversations")}
-                className="h-8 w-8 p-0"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <h1 className="text-sm font-bold">Unlimited AI</h1>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setMobileView("settings")}
-                className="h-8 w-8 p-0"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-          
-          {/* 移动端内容区 */}
-          {mobileView === "chat" && currentConversationId && conversations.find(c => c.id === currentConversationId) ? (
-            <>
-              <div className="flex-1 overflow-y-auto pb-36">
-                <MessageList 
-                  conversationId={currentConversationId} 
-                  showThinking={showThinking} 
-                />
-              </div>
-              <div className="fixed bottom-12 left-0 right-0 border-t border-border bg-background p-2 py-4 shadow-md">
-                <ChatInput conversationId={currentConversationId} />
-              </div>
-            </>
-          ) : mobileView === "chat" ? (
-            <div className="flex-1 flex items-center justify-center bg-muted/10">
-              <div className="text-center max-w-md mx-auto p-4">
-                <h3 className="text-sm font-medium">Unlimited AI</h3>
-                <p className="text-xs text-muted-foreground mt-1 mb-4">
-                  {conversations.length > 0 
-                    ? '请选择一个对话或创建新对话' 
-                    : '体验现代智能化的 AI'}
-                </p>
-                
-                {conversations.length === 0 && (
-                  <>
-                    <div className="grid grid-cols-2 gap-3 mb-4 text-left">
-                      <div className="p-3 border border-border rounded-lg">
-                        <FileText className="h-5 w-5 mb-1 text-primary" />
-                        <h4 className="text-xs font-medium">智能写作</h4>
-                        <p className="text-[10px] text-muted-foreground">创作文章、总结内容、生成创意文案</p>
-                      </div>
-                      <div className="p-3 border border-border rounded-lg">
-                        <HelpCircle className="h-5 w-5 mb-1 text-primary" />
-                        <h4 className="text-xs font-medium">知识问答</h4>
-                        <p className="text-[10px] text-muted-foreground">解答问题、提供专业知识和建议</p>
-                      </div>
-                      <div className="p-3 border border-border rounded-lg">
-                        <User className="h-5 w-5 mb-1 text-primary" />
-                        <h4 className="text-xs font-medium">多角色切换</h4>
-                        <p className="text-[10px] text-muted-foreground">根据需求选择不同专业领域的AI助手</p>
-                      </div>
-                      <div className="p-3 border border-border rounded-lg">
-                        <Settings className="h-5 w-5 mb-1 text-primary" />
-                        <h4 className="text-xs font-medium">自定义设置</h4>
-                        <p className="text-[10px] text-muted-foreground">个性化配置，满足不同使用场景</p>
-                      </div>
-                    </div>
-                    <Button 
-                      className="w-full flex items-center justify-center gap-2" 
-                      onClick={handleCreateConversation}
-                    >
-                      <MessageSquarePlus className="h-4 w-4" />
-                      开始对话
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : mobileView === "conversations" ? (
-            <MobileConversationPage setActiveTab={(tab) => setMobileView(tab)} />
-          ) : mobileView === "settings" ? (
-            <MobileSettingsPage setActiveTab={(tab) => setMobileView(tab)} />
-          ) : null}
-          
-          {/* 移动端底部导航 */}
-          <MobileNav activeTab={mobileView} setActiveTab={setMobileView} />
-        </div>
-        <Toaster position="top-center" />
-        <AnnouncementDialog />
-      </ThemeProvider>
+  // 准备渲染内容
+  let content;
+  
+  // 如果当前页面是价格页面，直接显示价格内容
+  if (pathname === '/pricing') {
+    content = (
+      <div className="flex flex-col min-h-screen">
+        {children}
+        {isMobile && <MobileNav activeTab="pricing" setActiveTab={() => {}} />}
+      </div>
     );
   }
-  
+  // 渲染移动端视图
+  else if (isMobile) {
+    content = (
+      <div className="flex flex-col h-screen overflow-hidden">
+        {/* 移动端头部 */}
+        {mobileView === "chat" && (
+          <div className="flex items-center justify-between p-2 border-b border-border bg-background">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setMobileView("conversations")}
+              className="h-8 w-8 p-0"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <h1 className="text-sm font-bold">Unlimited AI</h1>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setMobileView("settings")}
+              className="h-8 w-8 p-0"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        
+        {/* 移动端内容区 */}
+        {mobileView === "chat" && currentConversationId && conversations.find(c => c.id === currentConversationId) ? (
+          <>
+            <div className="flex-1 overflow-y-auto pb-40">
+              <MessageList 
+                conversationId={currentConversationId} 
+                showThinking={showThinking} 
+              />
+            </div>
+            <div className="fixed bottom-12 left-0 right-0 border-t border-border bg-background p-2 py-4 shadow-lg z-10">
+              <ChatInput conversationId={currentConversationId} />
+            </div>
+          </>
+        ) : mobileView === "chat" ? (
+          <div className="flex-1 flex items-center justify-center bg-muted/10">
+            <div className="text-center max-w-md mx-auto p-4">
+              <h3 className="text-sm font-medium">Unlimited AI</h3>
+              <p className="text-xs text-muted-foreground mt-1 mb-4">
+                {conversations.length > 0 
+                  ? '请选择一个对话或创建新对话' 
+                  : '体验现代智能化的 AI'}
+              </p>
+              
+              {conversations.length === 0 && (
+                <>
+                  <div className="grid grid-cols-2 gap-3 mb-4 text-left">
+                    <div className="p-3 border border-border rounded-lg">
+                      <FileText className="h-5 w-5 mb-1 text-primary" />
+                      <h4 className="text-xs font-medium">智能写作</h4>
+                      <p className="text-[10px] text-muted-foreground">创作文章、总结内容、生成创意文案</p>
+                    </div>
+                    <div className="p-3 border border-border rounded-lg">
+                      <HelpCircle className="h-5 w-5 mb-1 text-primary" />
+                      <h4 className="text-xs font-medium">知识问答</h4>
+                      <p className="text-[10px] text-muted-foreground">解答问题、提供专业知识和建议</p>
+                    </div>
+                    <div className="p-3 border border-border rounded-lg">
+                      <User className="h-5 w-5 mb-1 text-primary" />
+                      <h4 className="text-xs font-medium">多角色切换</h4>
+                      <p className="text-[10px] text-muted-foreground">根据需求选择不同专业领域的AI助手</p>
+                    </div>
+                    <div className="p-3 border border-border rounded-lg">
+                      <Settings className="h-5 w-5 mb-1 text-primary" />
+                      <h4 className="text-xs font-medium">自定义设置</h4>
+                      <p className="text-[10px] text-muted-foreground">个性化配置，满足不同使用场景</p>
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full flex items-center justify-center gap-2" 
+                    onClick={handleCreateConversation}
+                  >
+                    <MessageSquarePlus className="h-4 w-4" />
+                    开始对话
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        ) : mobileView === "conversations" ? (
+          <MobileConversationPage setActiveTab={(tab) => setMobileView(tab)} />
+        ) : mobileView === "settings" ? (
+          <MobileSettingsPage setActiveTab={(tab) => setMobileView(tab)} />
+        ) : null}
+        
+        {/* 移动端底部导航 */}
+        <MobileNav activeTab={mobileView} setActiveTab={setMobileView} />
+      </div>
+    );
+  }
   // 桌面端视图
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+  else {
+    content = (
       <div className="flex h-screen overflow-hidden">
         {/* 侧边栏 */}
         <div className="w-72 border-r border-border bg-background flex flex-col shadow-sm">
@@ -356,7 +350,13 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
           )}
         </div>
       </div>
-      <Toaster position="top-right" />
+    );
+  }
+
+  return (
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      {content}
+      <Toaster position={isMobile ? "top-center" : "top-right"} />
       <AnnouncementDialog />
     </ThemeProvider>
   );
