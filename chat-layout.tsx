@@ -92,7 +92,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
     } catch (e) {
       console.error('读取localStorage失败:', e);
     }
-  }, [conversations.length, createConversation, isInitialized]);
+  }, [conversations.length, createConversation, isInitialized, settings]);
   
   // 处理创建新对话
   const handleCreateConversation = () => {
