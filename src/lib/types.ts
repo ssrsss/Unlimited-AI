@@ -1,12 +1,3 @@
-export interface CharacterCard {
-  id: string;
-  name: string;
-  description: string;
-  systemPrompt: string;
-  isDefault?: boolean;
-  avatar?: string;
-}
-
 export interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -21,12 +12,20 @@ export interface Conversation {
   updatedAt: Date;
 }
 
+export interface CharacterCard {
+  id: string;
+  name: string;
+  description: string;
+  systemPrompt: string;
+  isDefault?: boolean;
+}
+
 export interface Settings {
   apiKey: string;
   apiEndpoint: string;
   defaultModel: string;
   globalSystemPrompt: string;
-  theme: 'light' | 'dark' | 'system';
+  theme: 'system' | 'light' | 'dark';
   showThinking: boolean;
 }
 
