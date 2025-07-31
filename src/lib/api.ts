@@ -1,4 +1,4 @@
-import { ApiResponse, Message, Model } from './types';
+import { Message, Model } from '@/lib/types';
 
 export async function streamChat({
   messages,
