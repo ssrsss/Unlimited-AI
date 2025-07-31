@@ -1,5 +1,13 @@
+export interface CharacterCard {
+  id: string;
+  name: string;
+  description: string;
+  systemPrompt: string;
+  isDefault?: boolean;
+}
+
 export interface Message {
-  role: 'user' | 'assistant' | 'system';
+  role: 'system' | 'user' | 'assistant';
   content: string;
   reasoning_content?: string;
 }
@@ -10,15 +18,6 @@ export interface Conversation {
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface CharacterCard {
-  id: string;
-  name: string;
-  description: string;
-  systemPrompt: string;
-  avatar?: string;
-  isDefault?: boolean;
 }
 
 export interface Settings {
