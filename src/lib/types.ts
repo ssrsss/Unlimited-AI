@@ -18,7 +18,6 @@ export interface CharacterCard {
   description: string;
   systemPrompt: string;
   isDefault?: boolean;
-  avatar?: string;
 }
 
 export interface Settings {
